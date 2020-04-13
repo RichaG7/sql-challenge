@@ -98,14 +98,15 @@ WHERE emp_no IN (
 
 SELECT * FROM sales_dev_emp LIMIT 100;
 
-SELECT emp_no, last_name, first_name, (
-	SELECT dept_name
-	FROM departments
-	WHERE dept_no IN (
-		SELECT dept_no
-		FROM dept_emp
-		WHERE sales_dev_emp.emp_no = dept_emp.emp_no))
-FROM sales_dev_emp;
+CREATE OR REPLACE VIEW sales_dev_emp_final AS
+SELECT emp_no, last_name, first_name, string_agg(
+	(SELECT string_agg(dept_name, ',')
+	FROM departments JOIN dept_emp ON departments.dept_no = dept_emp.dept_no
+	WHERE sales_dev_emp.emp_no = dept_emp.emp_no)::text, ',') AS dept_name
+FROM sales_dev_emp
+GROUP BY emp_no, last_name, first_name;
+
+SELECT * FROM sales_dev_emp_final LIMIT 100;
 
 --In descending order, list the frequency count of employee last names, 
 --i.e., how many employees share each last name.
@@ -114,6 +115,8 @@ SELECT last_name, COUNT(last_name) as last_name_count
 FROM employees
 GROUP BY last_name
 ORDER by last_name_count desc;
+
+SELECT * FROM last_name_count LIMIT 100;
 
 
 
